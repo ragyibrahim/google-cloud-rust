@@ -4,16 +4,21 @@ on:
   push:
     branches:
       - main
-  pull_request:
+  pull_request_target:
     branches:
       - main
+    types: [labeled]
 
 jobs:
   common:
     name: common
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test')
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
       - uses: actions/cache@v2
         with:
           path: |
@@ -35,6 +40,16 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v0.6.0
+        with:
+          service_account_key: ${{ secrets.STORAGE_CREDENTIALS }}
+          export_default_credentials: true
+      - uses: actions-rs/cargo@v1
+        name: auth-test
+        with:
+          command: test
+          args: --release --all-features --manifest-path foundation/auth/Cargo.toml
   pubsub:
     name: pubsub
     runs-on: ubuntu-latest
@@ -47,6 +62,9 @@ jobs:
           PUBSUB_PROJECT1: "local-project,test-topic:test-subscription,test-topic1:test-subscription1"
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
       - uses: actions/cache@v2
         with:
           path: |
@@ -76,6 +94,9 @@ jobs:
           - 9010:9010
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
       - uses: actions/cache@v2
         with:
           path: |
@@ -113,8 +134,12 @@ jobs:
   storage:
     name: storage
     runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test')
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v0.6.0
         with:

@@ -14,6 +14,7 @@ use crate::apiv1::spanner_client::{ping_query_request, Client};
 
 use google_cloud_gax::cancel::CancellationToken;
 use google_cloud_gax::grpc::{Code, Status};
+use google_cloud_gax::retry::TryAs;
 use tokio::sync::broadcast;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
@@ -321,6 +322,15 @@ pub enum SessionError {
     GRPC(#[from] Status),
 }
 
+impl TryAs<Status> for SessionError {
+    fn try_as(&self) -> Option<&Status> {
+        match self {
+            SessionError::GRPC(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
 impl SessionManager {
     pub async fn new(
         database: impl Into<String>,
@@ -459,12 +469,19 @@ fn schedule_refresh(config: SessionConfig, session_pool: SessionPool, cancel: Ca
                 _ = interval.tick() => {},
                 _ = cancel.cancelled() => break
             }
+            let now = Instant::now();
             let max_removing_count = session_pool.num_opened() as i64 - config.max_idle as i64;
             if max_removing_count < 0 {
+                health_check(
+                    now + Duration::from_nanos(1),
+                    config.session_alive_trust_duration,
+                    &session_pool,
+                    cancel.clone(),
+                )
+                .await;
                 continue;
             }
 
-            let now = Instant::now();
             shrink_idle_sessions(
                 now,
                 config.idle_timeout,

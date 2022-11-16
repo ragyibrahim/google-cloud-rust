@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use google_cloud_gax::cancel::CancellationToken;
+use prost_types::DurationError;
 use std::time::Duration;
 
 use google_cloud_gax::grpc::{Code, Status};
@@ -40,7 +41,7 @@ impl Default for TopicConfig {
 /// Topic is a reference to a PubSub topic.
 ///
 /// The methods of Topic are safe for use by multiple tasks.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Topic {
     fqtn: String,
     pubc: PublisherClient,
@@ -83,7 +84,11 @@ impl Topic {
             kms_key_name: topic_config.kms_key_name,
             schema_settings: topic_config.schema_settings,
             satisfies_pzs: topic_config.satisfies_pzs,
-            message_retention_duration: topic_config.message_retention_duration.map(|v| v.into()),
+            message_retention_duration: topic_config
+                .message_retention_duration
+                .map(Duration::try_into)
+                .transpose()
+                .map_err(|err: DurationError| Status::internal(err.to_string()))?,
         };
         self.pubc.create_topic(req, cancel, retry).await.map(|_v| ())
     }
@@ -164,7 +169,7 @@ mod tests {
         let cm2 = ConnectionManager::new(4, &Environment::Emulator("localhost:8681".to_string()), "").await?;
         let subc = SubscriberClient::new(cm2);
 
-        let uuid = Uuid::new_v4().to_hyphenated().to_string();
+        let uuid = Uuid::new_v4().hyphenated().to_string();
         let topic_name = format!("projects/local-project/topics/t{}", uuid);
         let ctx = CancellationToken::new();
 

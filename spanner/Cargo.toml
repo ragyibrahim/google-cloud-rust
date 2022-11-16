@@ -1,6 +1,6 @@
 [package]
 name = "google-cloud-spanner"
-version = "0.10.1"
+version = "0.12.0"
 authors = ["yoshidan <naohiro.y@gmail.com>"]
 edition = "2021"
 repository = "https://github.com/yoshidan/google-cloud-rust/tree/main/spanner"
@@ -12,8 +12,7 @@ documentation = "https://docs.rs/google-cloud-spanner/latest/google_cloud_spanne
 
 [dependencies]
 tracing = "0.1"
-prost = "0.10"
-prost-types = "0.10"
+prost-types = "0.11"
 tokio = "1.20"
 chrono = "0.4"
 thiserror = "1.0"
@@ -22,15 +21,15 @@ parking_lot = "0.12"
 base64 = "0.13"
 anyhow = "1.0"
 
-google-cloud-auth= {  version = "0.4.1", path = "../foundation/auth", default-features = false}
-google-cloud-longrunning= { version = "0.7.1", path = "../foundation/longrunning", default-features = false}
-google-cloud-gax = { version = "0.8.1", path = "../foundation/gax", default-features = false}
-google-cloud-googleapis = { version = "0.5.1", path = "../googleapis", features = ["spanner"]}
+google-cloud-auth= {  version = "0.5.1", path = "../foundation/auth", default-features = false}
+google-cloud-longrunning= { version = "0.8.1", path = "../foundation/longrunning", default-features = false}
+google-cloud-gax = { version = "0.9.1", path = "../foundation/gax", default-features = false}
+google-cloud-googleapis = { version = "0.6.0", path = "../googleapis", features = ["spanner"]}
 
 [dev-dependencies]
 tokio = { version="1.20", features=["rt-multi-thread"] }
 tracing-subscriber = "0.3"
-serial_test = "0.5.1"
+serial_test = "0.9"
 anyhow = "1.0.48"
 ctor = "0.1"
 

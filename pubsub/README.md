@@ -2,6 +2,9 @@
 
 Google Cloud Platform pub/sub library.
 
+[![crates.io](https://img.shields.io/crates/v/google-cloud-pubsub.svg)](https://crates.io/crates/google-cloud-pubsub)
+
+
 * [About Cloud Pub/Sub](https://cloud.google.com/pubsub/)
 * [Pub/Sub API Documentation](https://cloud.google.com/pubsub/docs)
 
@@ -103,6 +106,8 @@ google-cloud-pubsub = <version>
      config.enable_message_ordering = true;
 
      // Create subscription
+     // If subscription name does not contain a "/", then the project is taken from client above. Otherwise, the
+     // name will be treated as a fully qualified resource name
      let subscription = client.subscription("test-subscription");
      if !subscription.exists(None, None).await? {
          subscription.create(topic.fully_qualified_name(), config, None, None).await?;
@@ -117,6 +122,7 @@ google-cloud-pubsub = <version>
      });
 
      // Receive blocks until the ctx is cancelled or an error occurs.
+     // Or simply use the `subscription.subscribe` method.
      subscription.receive(|mut message, cancel| async move {
          // Handle data.
          let data = message.message.data.as_slice();
